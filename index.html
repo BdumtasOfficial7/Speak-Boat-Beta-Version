@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Conversation Game</title>
+  <style>
+    * {box-sizing: border-box; margin: 0; padding: 0;}
+    body {
+      font-family: 'Comic Sans MS', 'Poppins', cursive, sans-serif;
+      background: linear-gradient(to bottom, #a0e9f0, #ffe2f0);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+      overflow-x: hidden;
+    }
+    h1 {
+      font-size: 2.5em;
+      color: #ff6f91;
+      margin: 20px 0;
+      text-align: center;
+    }
+    select, button, input[type="text"] {
+      margin: 8px;
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: 2px solid #ccc;
+      font-size: 18px;
+      background-color: white;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 100%;
+      max-width: 400px;
+    }
+    button:hover {
+      background-color: #ffb6b9;
+      color: white;
+    }
+    #start-area, #game-area, #score-area {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .bot-face {
+      font-size: 100px;
+      margin: 20px 0;
+    }
+    .choices {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    #speakButton {
+      background-color: #9dd3fc;
+    }
+    #speakButton.listening {
+      background-color: #00c853;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% {transform: scale(1);}
+      50% {transform: scale(1.1);}
+      100% {transform: scale(1);}
+    }
+    #translation {
+      font-style: italic;
+      margin-bottom: 10px;
+      color: #555;
+    }
+
+    /* Media Queries */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2em;
+      }
+      select, button, input[type="text"] {
+        font-size: 16px;
+      }
+      .bot-face {
+        font-size: 80px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      select, button, input[type="text"] {
+        font-size: 14px;
+        padding: 10px 15px;
+      }
+      .bot-face {
+        font-size: 60px;
+      }
+      #start-area, #game-area, #score-area {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Let's Talk in English!</h1>
+
+<div id="start-area">
+  <label for="childName">Enter your name:</label><br>
+  <input type="text" id="childName" placeholder="Your name"><br>
+  <label for="topic">Choose a topic:</label><br>
+  <select id="topic">
+    <option value="">-- Select Topic --</option>
+    <option value="animals">Animals</option>
+    <option value="food">Food</option>
+    <option value="colors">Colors</option>
+  </select><br>
+  <button onclick="startGame()">Start Game</button>
+</div>
+
+<div id="game-area" style="display:none;">
+  <div class="bot-face" id="bot-face">😊</div>
+  <h2 id="question"></h2>
+  <div id="translation"></div>
+  <div class="choices" id="choices"></div>
+  <input type="text" id="textAnswer" placeholder="Type or Speak your answer..." onkeypress="handleKey(event)">
+  <div>
+    <button id="speakButton" onclick="startListening()">Tap & Speak</button>
+    <button onclick="submitAnswer()">Submit</button>
+  </div>
+</div>
+
+<div id="score-area" style="display:none;">
+  <h2>Congratulations!</h2>
+  <p id="score-text"></p>
+  <button onclick="sendWhatsApp()">Send to WhatsApp</button>
+</div>
+
+<audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c57bfa7127.mp3?filename=success-1-6297.mp3"></audio>
+<audio id="wrongSound" src="https://cdn.pixabay.com/download/audio/2022/02/22/audio_ec8c1e0e08.mp3?filename=error-2-95785.mp3"></audio>
+
+<script>
+let topics = {
+  animals: [
+    {question: "What is your favorite animal?", answers: ["dog", "cat", "rabbit"], translation: "Hewan apa yang kamu suka?", choices: ["dog", "cat", "rabbit"]},
+    {question: "Can you name a big animal?", answers: ["elephant", "lion"], translation: "Sebutkan hewan besar!", choices: ["elephant", "lion", "mouse"]},
+  ],
+  food: [
+    {question: "What food do you like?", answers: ["pizza", "burger", "salad"], translation: "Makanan apa yang kamu suka?", choices: ["pizza", "burger", "salad"]},
+    {question: "What is sweet food?", answers: ["cake", "candy"], translation: "Apa makanan yang manis?", choices: ["cake", "rice", "bread"]},
+  ],
+  colors: [
+    {question: "What is your favorite color?", answers: ["blue", "pink", "yellow"], translation: "Apa warna favoritmu?", choices: ["blue", "pink", "yellow"]},
+    {question: "Name a color of the sky.", answers: ["blue"], translation: "Sebutkan warna langit.", choices: ["blue", "green", "red"]},
+  ]
+};
+
+let currentTopic = [];
+let currentIndex = 0;
+let score = 0;
+let recognition;
+
+function startGame() {
+  const selectedTopic = document.getElementById('topic').value;
+  const childName = document.getElementById('childName').value.trim();
+  if (!childName || !selectedTopic) {
+    alert("Please enter your name and choose a topic.");
+    return;
+  }
+  currentTopic = topics[selectedTopic];
+  currentIndex = 0;
+  score = 0;
+
+  document.getElementById('start-area').style.display = 'none';
+  document.getElementById('game-area').style.display = 'block';
+  speak("Let's start! Please answer my questions.");
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = currentTopic[currentIndex];
+  document.getElementById('question').textContent = q.question;
+  document.getElementById('translation').textContent = q.translation;
+  document.getElementById('choices').innerHTML = '';
+
+  q.choices.forEach(choice => {
+    const button = document.createElement('button');
+    button.textContent = choice;
+    button.onclick = () => {
+      document.getElementById('textAnswer').value = choice;
+    };
+    document.getElementById('choices').appendChild(button);
+  });
+
+  changeBot('🤔');
+  speak(q.question);
+}
+
+function submitAnswer() {
+  const userAnswer = document.getElementById('textAnswer').value.toLowerCase().trim();
+  const correctAnswers = currentTopic[currentIndex].answers.map(a => a.toLowerCase());
+
+  if (currentIndex === currentTopic.length - 1) {
+    if (correctAnswers.some(ans => userAnswer.includes(ans))) {
+      score++;
+    }
+    showScore();
+    return;
+  }
+
+  if (correctAnswers.some(ans => userAnswer.includes(ans))) {
+    score++;
+    changeBot('😃');
+    playCorrectSound();
+    speak("Good job!");
+    currentIndex++;
+    setTimeout(() => {
+      document.getElementById('textAnswer').value = '';
+      showQuestion();
+    }, 1000);
+  } else {
+    changeBot('😟');
+    playWrongSound();
+    speak("Try again!");
+    document.getElementById('textAnswer').value = '';
+  }
+}
+
+function showScore() {
+  document.getElementById('game-area').style.display = 'none';
+  document.getElementById('score-area').style.display = 'block';
+  document.getElementById('score-text').textContent = `Your score: ${score}/${currentTopic.length}`;
+  changeBot('🎉');
+  speak("Congratulations! You finished the game!");
+}
+
+function changeBot(expression) {
+  document.getElementById('bot-face').textContent = expression;
+}
+
+function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US'; // Pilih bahasa Inggris Amerika
+  utterance.pitch = 1.2;
+  utterance.rate = 1;
+
+  // Menentukan suara wanita dewasa
+  const voices = speechSynthesis.getVoices();
+  let voiceFound = false;
+  for (let voice of voices) {
+    // Mencari suara wanita dewasa
+    if (voice.name.includes('Google UK English Female') || voice.name.includes('Google US English Female')) {
+      utterance.voice = voice;
+      voiceFound = true;
+      break;
+    }
+  }
+
+  if (!voiceFound) {
+    // Jika tidak ditemukan, gunakan suara default
+    utterance.voice = voices.find(voice => voice.lang === 'en-US');
+  }
+
+  speechSynthesis.speak(utterance);
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter') {
+    submitAnswer();
+  }
+}
+
+function startListening() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert("Sorry, your browser does not support voice recognition.");
+    return;
+  }
+
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.start();
+  document.getElementById('speakButton').classList.add('listening');
+  changeBot('🎤');
+
+  recognition.onresult = function(event) {
+    const result = event.results[0][0].transcript;
+    document.getElementById('textAnswer').value = result;
+    checkPronunciation(result);
+    document.getElementById('speakButton').classList.remove('listening');
+  };
+
+  recognition.onerror = function(event) {
+    document.getElementById('speakButton').classList.remove('listening');
+    changeBot('😟');
+    alert('Error occurred: ' + event.error);
+  };
+}
+
+function checkPronunciation(userSpeech) {
+  const correctAnswers = currentTopic[currentIndex].answers.map(a => a.toLowerCase());
+  const userAnswer = userSpeech.toLowerCase().trim();
+
+  let accuracy = 0;
+  if (correctAnswers.some(ans => userAnswer.includes(ans))) {
+    accuracy = 100;
+    speak("Perfect pronunciation!");
+  } else {
+    accuracy = Math.floor(Math.random() * 40) + 50;
+    speak("Almost correct, try again!");
+  }
+
+  console.log("Pronunciation accuracy:", accuracy + "%");
+}
+
+function playCorrectSound() {
+  document.getElementById('correctSound').play();
+}
+function playWrongSound() {
+  document.getElementById('wrongSound').play();
+}
+
+function sendWhatsApp() {
+  const phoneNumber = "6281243635245"; // Ganti dengan nomor WhatsApp tujuan
+  const childName = document.getElementById("childName").value.trim();
+  const topic = document.getElementById("topic").value;
+  const date = new Date().toLocaleDateString();
+  const message = `Hello! This is ${childName}. I just played the English Game on the topic "${topic}".\nMy score: ${score}/${currentTopic.length}\nDate: ${date}`;
+  const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+}
+</script>
+
+</body>
+</html>
