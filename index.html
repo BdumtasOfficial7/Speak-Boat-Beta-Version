@@ -116,6 +116,7 @@
   <select id="topic">
     <option value="">-- Select Topic --</option>
     <option value="animals">Animals</option>
+    <option value="school">School</option>
     <option value="food">Food</option>
     <option value="colors">Colors</option>
   </select><br>
@@ -149,6 +150,15 @@ let topics = {
     {question: "What is your favorite animal?", answers: ["dog", "cat", "rabbit"], translation: "Hewan apa yang kamu suka?", choices: ["dog", "cat", "rabbit"]},
     {question: "Can you name a big animal?", answers: ["elephant", "lion"], translation: "Sebutkan hewan besar!", choices: ["elephant", "lion", "mouse"]},
   ],
+  school: [
+    {question: "How are you today?", answers: ["fine", "amazing", "good", "awesome", "better", "happy", "sad", "grateful", "great", "well", "excellent", "not feeling very well", "not feeling well", "a bit under the weather", "rough", "dealing", "not", "tired", "tire", "stressed", "bad", "trying"], translation: "Hi, apa kabarmu hari ini?", choices: ["I'm fine, thank you", "I am not feeling very well today", "I am good", "Not so good"]},
+    {question: "Where are you right now?", answers: ["school", "in the classroom", "in the library", "in the teacher's room", "canteen", "in the principal's office", "in the laboratory", "in the computer room", "in the music room", "art room", "in the bathroom", "gate", "flag", "flagpole", "classrooms", "tree", "teacher", "friend", "teachers", "friends", "in the school yard"], translation: "Di mana kamu sekarang?", choices: ["I'm at school", "I am in the classroom", "i'm in the canteen"]},
+    {question: "Look around you. What do you find there?", answers: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"], translation: "Lihat sekelilingmu. Apa yang kau temukan di sana?", choices: ["Table", "Chair", "Pencil"]},
+    {question: "Touch something you see around you right now! What do you feel?", answers: ["i feel", "i like", "it feels", "i feel something", "this feels", "it's", "it is", "i don't feel", "i don't like", "i do not like", "i don't want", "i do not want", "i can not", "i can't", "sorry", "no"], translation: "Sentuh sesuatu yang kamu lihat di sekitar kamu saat ini! Apa yang kamu rasakan?", choices: ["I feel something soft", "it feels warm", "I don't feel anything", "Sorry, I am not comfortable doing that"]},
+    {question: "Ok, What are you doing right now?", answers: ["i am", "i am not", "i'm", "i'm not"], translation: "Ok, apa yang sedang kamu lakukan sekarang ini?", choices: ["I am reading a book", "I'm just relaxing", "I'm not doing anything"]},
+    {question: "How do you ask for permission to go to the restroom during class?", answers: ["restroom", "bathroom", "pee", "toilet"], translation: "Bagaimana cara meminta izin ke toilet saat jam pelajaran berlangsung?", choices: ["May I got to the restroom, please?", "Excuse me, may I use the toilet?", "Can I go pee?", "I need to go to the restroom"]},
+    {question: "What is your favorite subject?", answers: ["my favorite subject is", "i like", "it's", "i love"], translation: "Apa pelajaran favoritmu?", choices: ["My favorite subject is English", "i think it is English"]},
+  ],
   food: [
     {question: "What food do you like?", answers: ["pizza", "burger", "salad"], translation: "Makanan apa yang kamu suka?", choices: ["pizza", "burger", "salad"]},
     {question: "What is sweet food?", answers: ["cake", "candy"], translation: "Apa makanan yang manis?", choices: ["cake", "rice", "bread"]},
@@ -177,7 +187,7 @@ function startGame() {
 
   document.getElementById('start-area').style.display = 'none';
   document.getElementById('game-area').style.display = 'block';
-  speak("Let's start! Please answer my questions.");
+  speak("Hi, My name is Gin. I will help you talk in English. Let's Start!");
   showQuestion();
 }
 
